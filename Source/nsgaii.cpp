@@ -8,6 +8,8 @@
 # include "./parsefile.cpp"
 # include "./error.cpp"
 
+# include "./debug.cpp"
+
 using namespace std;
 
 NSGAII::NSGAII(){
@@ -15,6 +17,7 @@ NSGAII::NSGAII(){
     if (_checkparams(p)){
         NSGAII::_params = p;
     }
+    ToString(NSGAII::_params);
 } // NSGAII::NSGAII()
 
 // Return True if params legal 
@@ -58,4 +61,6 @@ bool NSGAII::_checkparams(params _params){
     if (_params.nreal == 0 && _params.nbin == 0){
         RaiseError("Number of real as well as binary variables, both are zero, hence exiting");
     }
+
+    return true;
 } // bool NSGAII::_checkparams(params _params)

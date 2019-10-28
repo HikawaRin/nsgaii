@@ -1,4 +1,6 @@
 // Declaration for debug file
+# ifndef NSGAII_SOURCE_DEBUG_CPP
+# define NSGAII_SOURCE_DEBUG_CPP
 
 # include <iostream>
 
@@ -43,3 +45,5 @@ void ToString(params _params){
     cout << "ipaddress: " << _params.IPAddress << endl;
     cout << "port: " << _params.port << endl; 
 }
+
+# endif // NSGAII_SOURCE_DEBUG_CPP

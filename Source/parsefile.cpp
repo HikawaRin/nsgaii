@@ -1,4 +1,6 @@
 /* Declaration of function for parse file*/
+# ifndef NSGAII_SOURCE_PARSEFILE_CPP
+# define NSGAII_SOURCE_PARSEFILE_CPP
 
 # include <fstream>
 # include <string>
@@ -15,7 +17,7 @@ params Loadin(string path);
 // Support .json .in
 params LoadSetting(string path){
     size_t found = path.find_last_of(".");
-    string _filetype = path.substr(found);
+    string _filetype = path.substr(found + 1);
     
     if (_filetype == "json"){
         // 配置文件为json格式
@@ -24,7 +26,9 @@ params LoadSetting(string path){
         // 配置文件为in格式
         return Loadin(path);
     }else{
-        RaiseError("Unsupport Setting File Type");
+        string s = "Unsupport Setting File Type: ";
+        s += _filetype;
+        RaiseError(s.c_str());
     }
 }
 
@@ -186,3 +190,5 @@ params Loadin(string path){
     file.close();
     return _params;
 }
+
+# endif // NSGAII_SOURCE_PARSEFILE_CPP
