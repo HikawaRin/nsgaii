@@ -12,7 +12,7 @@ class NSGAII{
     public:
         NSGAII(IGetDataAble *dataBase);
         // 计算所有种群中每个个体的目标函数
-        void ComputeObj();
+        void ComputeObj(std::vector<Individual*> &inds);
         // 种群进化
         void Evolution();
 

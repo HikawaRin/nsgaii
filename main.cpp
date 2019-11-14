@@ -13,6 +13,7 @@ int main(){
     MockDataSet mock;
     NSGAII nsga2(&mock);
     Log("Load complete");
+    nsga2.Evolution();
 
     return 0;
 }

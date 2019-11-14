@@ -8,10 +8,7 @@
 # include "./population.hpp"
 
 struct DataForm{
-    // 该个体所属的种群
-    int popIndex;
-    // 种群中个体所属的编号
-    int indIndex;
+    int index;
     // 实数值
     std::vector<double> xreal;
     // 解码值

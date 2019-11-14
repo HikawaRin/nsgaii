@@ -6,7 +6,7 @@
 
 // 需手动创建输出文件夹，代码无法自动创建文件夹
 // 设置参数文件路径
-# define SettingPath    "../nsgaii/Input/Setting.in"
+# define SettingPath    "../nsgaii/Input/ctp1.in"
 // 存放初始种群数据
 # define InitialPopPath "./Out/initial_pop.csv"
 // 存放最后一代的种群数据

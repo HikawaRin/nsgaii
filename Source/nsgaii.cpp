@@ -15,43 +15,55 @@
 
 using namespace std;
 
-void NSGAII::ComputeObj(){
-    int popsize = NSGAII::_populations[0]->ind.size();
-    
+void NSGAII::ComputeObj(std::vector<Individual*> &inds){
     // 初始化dataForms
     std::vector<DataForm> dataForms;
-    for (int i = 0; i < CoreNum; i++){
-        for (int j = 0; j < popsize; j++){
-            DataForm d;
-            d.popIndex = i;
-            d.indIndex = j;
-            d.xreal = NSGAII::_populations[i]->ind[j]->xreal;
-            d.xbin = NSGAII::_populations[i]->ind[j]->xbin;
-            d.gene = NSGAII::_populations[i]->ind[j]->gene;
+    for (int i = 0; i < inds.size(); i++){
+        DataForm d;
+        d.xreal = inds[i]->xreal;
+        d.xbin = inds[i]->xbin;
+        d.gene = inds[i]->gene;
 
-            dataForms.push_back(d);
-        }
+        dataForms.push_back(d);
     }
-    
     // 计算目标值
     NSGAII:_dataBase->GetData(dataForms);
     // 将目标值写入种群
-    
     for (int i = 0; i < dataForms.size(); i++){
-        int pI = dataForms[i].popIndex;
-        int iI = dataForms[i].indIndex;
-        NSGAII::_populations[pI]->ind[iI]->obj = dataForms[i].obj;
-        NSGAII::_populations[pI]->ind[iI]->constr = dataForms[i].constr;
+        inds[i]->obj = dataForms[i].obj;
+        inds[i]->constr = dataForms[i].constr;
     }
 } // void NSGAII::ComputeObj()
 
 void NSGAII::Evolution(){
+    std::vector<Individual*> inds;
+    for (int i = 0; i < this->_populations.size(); i++){
+        for (int j = 0; j < this->_populations[i]->ind.size(); j++){
+            inds.push_back(this->_populations[i]->ind[j]);
+        }
+    }
     // 计算Obj及Constr_violation
-    NSGAII::ComputeObj();
-    
+    NSGAII::ComputeObj(inds);
+    inds.clear();
     if (CoreNum == 1){
         // 单线程计算
-        NSGAII::_populations[0]->Evolution();
+        std::vector<Individual*> childInd;
+        for (int i = 0; i < this->_populations[0]->ind.size(); i++){
+            Individual *child = new Individual(*(this->_populations[0]->ind[i]));
+        }
+        for (int i = 0; i < this->Params.ngen; i++){
+            cout << "Gen: " << i << endl;
+            NSGAII::_populations[0]->Evolution(childInd);
+
+            for (auto i : childInd){
+                inds.push_back(i);
+            }
+            this->ComputeObj(inds);
+            inds.clear();
+            this->_populations[0]->RefreshPop(childInd);
+            this->_populations[0]->ReportPop(AllPopPath);
+        }
+        this->_populations[0]->RecordBest(BestPopPath);
     }else{
         // 创建CoreNum个线程，每个线程分配一个种群进行隔离进化
     }

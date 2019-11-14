@@ -42,9 +42,13 @@ class Population{
 public:
     Population(params p);
     // 种群进化一次
-    void Evolution();
+    void Evolution(std::vector<Individual*> &childInd);
     // 将种群信息写入文件
     void ReportPop(std::string path);
+    // 更新种群
+    void RefreshPop(std::vector<Individual*> &childInd);
+    // 记录最优值
+    void RecordBest(std::string path);
 
     // 种群中的个体
     std::vector<Individual*> ind;
@@ -53,6 +57,8 @@ public:
     // 变异概率
     double pcross_real;
     double pcross_bin;
+    double pmut_bin;
+    double pmut_real;
     // 变量的最小值
     std::vector<double> *min_realvar;
     std::vector<double> *min_binvar;
@@ -61,16 +67,21 @@ public:
     std::vector<double> *max_binvar;
 
     std::vector<int> *nbits;
-    double eta_c; 
+    double eta_c;
+    double eta_m; 
 private:
     // 计算种群中个体违反约束的情况
     void _computeViolation();
     // 计算支配等级及拥挤度
-    void _assign_rank_and_crowding_distance();
+    void _assign_rank_and_crowding_distance(std::vector<Individual*> &inds, int left, int right);
     // 种群选择操作
     void _selection(std::vector<Individual*> &childInd);
     // 种群交叉
-    void _crossover(Individual *p1, Individual *p2, Individual *c1, Individual *c2, int flag);
+    void _crossover(Individual *p1, Individual *p2, Individual *c1, Individual *c2);
+    // 对种群中的个体进行变异
+    void _mutation(std::vector<Individual*> &pop);
+    // 非支配排序
+    void _fill_nondominated_sort(std::vector<Individual*> &inds);
 }; // Struct population
 
 // 公共方法
