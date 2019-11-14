@@ -1,4 +1,5 @@
 // Declaration for debug file
+
 # ifndef NSGAII_SOURCE_DEBUG_CPP
 # define NSGAII_SOURCE_DEBUG_CPP
 
@@ -33,8 +34,8 @@ void ToString(params _params){
     cout << "eta_c: " << _params.eta_c << endl;
     cout << "eta_m: " << _params.eta_m << endl;
     cout << "nbin:" << _params.nbin << endl;
-    cout << "nbit: ";
-    ToString<int>(_params.nbit);
+    cout << "nbits: ";
+    ToString<int>(_params.nbits);
     cout << "min_binvar: ";
     ToString<double>(_params.min_binvar);
     cout << "max_binvar: ";

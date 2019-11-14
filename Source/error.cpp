@@ -1,4 +1,5 @@
 /* Declaration for handle error*/
+
 # ifndef NSGAII_SOURCE_ERROR_CPP
 # define NSGAII_SOURCE_ERROR_CPP
 

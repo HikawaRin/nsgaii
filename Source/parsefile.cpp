@@ -1,4 +1,5 @@
 /* Declaration of function for parse file*/
+
 # ifndef NSGAII_SOURCE_PARSEFILE_CPP
 # define NSGAII_SOURCE_PARSEFILE_CPP
 
@@ -30,6 +31,8 @@ params LoadSetting(string path){
         s += _filetype;
         RaiseError(s.c_str());
     }
+    params p;
+    return p;
 }
 
 // Return params filled with json data
@@ -152,7 +155,7 @@ params Loadin(string path){
                     if (min > max){
                         RaiseError("Wrong limits entered for the min and max bounds of binary variable entered, hence exiting");
                     }
-                    _params.nbit.push_back(bit);
+                    _params.nbits.push_back(bit);
                     _params.min_binvar.push_back(min);
                     _params.max_binvar.push_back(max);
                 } // for (int i = 0; i < _params.nbin; i++)

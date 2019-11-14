@@ -2,12 +2,17 @@
 
 # include "Source/nsgaii.cpp"
 # include "Source/parsefile.cpp"
+# include "Source/MockDataSet.cpp"
 # include "Source/debug.cpp"
+# include "Source/log.cpp"
 
 using namespace std;
 
 int main(){
-    NSGAII nsga2;
-    
+    Log("Program Start");
+    MockDataSet mock;
+    NSGAII nsga2(&mock);
+    Log("Load complete");
+
     return 0;
 }
