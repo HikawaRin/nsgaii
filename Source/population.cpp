@@ -564,7 +564,7 @@ void Population::_fill_nondominated_sort(std::vector<Individual*> &inds){
                 dist.push_back(*lt);
                 lt++;
             }
-            std::sort(dist.begin(), dist.end(), [inds](int a, int b)->bool{return inds[a]->crowd_dist <= inds[b]->crowd_dist;});
+            std::sort(dist.begin(), dist.end(), [inds](int a, int b)->bool{return inds[a]->crowd_dist < inds[b]->crowd_dist;});
             int j = front_size - 1;
             for (int i = counti; i < inds.size() / 2; i++){
                 newPop.push_back(inds[dist[j]]);
@@ -680,7 +680,7 @@ void Population::ReportPop(std::string path){
                 for (int j = 0; j < nbin; j++){
                     file << '"';
                     for (int k = 0; k < this->ind[i]->gene[j].size(); k++){
-                        file << this->ind[i]->gene[j][i] << ((k == this->ind[i]->gene[j].size() - 1)?'"':',');
+                        file << this->ind[i]->gene[j][k] << ((k == this->ind[i]->gene[j].size() - 1)?'"':',');
                     } // for (int k = 0; k < this->ind[i]->gene[j].size(); k++)
                     file << ',';
                 }
@@ -734,7 +734,7 @@ void Population::RecordBest(std::string path){
                     for (int j = 0; j < nbin; j++){
                         file << '"';
                         for (int k = 0; k < this->ind[i]->gene[j].size(); k++){
-                            file << this->ind[i]->gene[j][i] << ((k == this->ind[i]->gene[j].size() - 1)?'"':',');
+                            file << this->ind[i]->gene[j][k] << ((k == this->ind[i]->gene[j].size() - 1)?'"':',');
                         } // for (int k = 0; k < this->ind[i]->gene[j].size(); k++)
                         file << ',';
                     }
