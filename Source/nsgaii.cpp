@@ -50,16 +50,18 @@ void NSGAII::Evolution(){
         std::vector<Individual*> childInd;
         for (int i = 0; i < this->_populations[0]->ind.size(); i++){
             Individual *child = new Individual(*(this->_populations[0]->ind[i]));
+            childInd.push_back(child);
         }
         for (int i = 0; i < this->Params.ngen; i++){
             cout << "Gen: " << i << endl;
             NSGAII::_populations[0]->Evolution(childInd);
-
+            
             for (auto i : childInd){
                 inds.push_back(i);
             }
             this->ComputeObj(inds);
             inds.clear();
+            
             this->_populations[0]->RefreshPop(childInd);
             this->_populations[0]->ReportPop(AllPopPath);
         }

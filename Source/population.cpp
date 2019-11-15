@@ -45,6 +45,8 @@ void Individual::_decode(std::vector<int> &nbits, std::vector<double> &min_binva
 Individual::Individual(params p){
     Individual::power_dist = 0;
     Individual::crowd_dist = 0;
+    Individual::constr_violation = 0;
+    Individual::rank = 0;
     Individual::cnt = 0;
     // 生成位于[0,1)间的随机数
     std::uniform_real_distribution<double> dis(0, 1);
@@ -175,11 +177,11 @@ void Population::_assign_rank_and_crowding_distance(std::vector<Individual*> &in
         temp2 = cur.begin();
         origin.erase(temp1++);
         front_size = 1;
-
+        
         while (temp1 != origin.end()){
             temp2 = cur.begin();
             int flag = -1;
-
+            
             while (temp2 != cur.end()){
                 flag = Check_dominance(inds[*temp1], inds[*temp2]);
 
@@ -197,12 +199,12 @@ void Population::_assign_rank_and_crowding_distance(std::vector<Individual*> &in
             if (flag == 0 || flag == 1){
                 cur.push_front(*temp1);
                 front_size++;
-                origin.erase(temp1);
+                origin.erase(temp1++);
+            }else{
+                temp1++;
             }
-            temp1++;
-            cout << origin.size() << endl;
         } // while (temp1 != origin.end())
-        cout << "p" << endl;
+        
         temp2 = cur.begin();
         while (temp2 != cur.end()){
             inds[*temp2]->rank = rank;
@@ -240,11 +242,18 @@ void Population::_assign_rank_and_crowding_distance(std::vector<Individual*> &in
                 while (it != dist.end()){
                     // 如果拥挤距离为最大则无需更新
                     if (inds[*it]->crowd_dist != INF){
-                        double head = inds[*dist.begin()]->obj[i], tail = inds[*(dist.end()-1)]->obj[i];
+                        auto last = dist.end();
+                        last--;
+                        if (it == last){
+                            break;
+                        }
+                        double head = inds[*dist.begin()]->obj[i], tail = inds[*last]->obj[i];
                         if (head == tail){
                             inds[*it] ->crowd_dist += 0.0;
                         }else{
-                            inds[*it]->crowd_dist += (inds[*it + 1]->obj[i] + inds[*it + 1]->obj[i])/(tail - head);
+                            auto f = it, b = it;
+                            f--; b++;
+                            inds[*it]->crowd_dist += (inds[*b]->obj[i] - inds[*f]->obj[i])/(tail - head);
                         } // if (head == tail)
 
                         it++;
@@ -305,7 +314,10 @@ void Population::_crossover(Individual *p1, Individual *p2, Individual *c1, Indi
     double rand = dis(gen);
 
     int nreal = this->ind[0]->xreal.size();
-    int nbin = this->nbits->size();
+    int nbin = 0;
+	if (this->nbits != NULL) {
+		this->nbits->size();
+	}
 
     if (nreal != 0){
         double cc1, cc2;
@@ -441,7 +453,10 @@ void Population::_selection(std::vector<Individual*> &childInd){
 
 void Population::_mutation(std::vector<Individual*> &pop){
     int nreal = this->ind[0]->xreal.size();
-    int nbin = this->nbits->size();
+    int nbin = 0;
+	if (this->nbits != NULL) {
+		this->nbits->size();
+	}
 
     std::uniform_real_distribution<double> dis(0.0, 1.0);
     for (auto ind : pop){
@@ -521,18 +536,19 @@ void Population::_fill_nondominated_sort(std::vector<Individual*> &inds){
             if (flag == 0 || flag == 1){
                 elite.push_front(*temp1);
                 front_size++;
-                pool.erase(temp1);
+                pool.erase(temp1++);
+            }else{
+                temp1++;
             } // if (flag == 0 || flag == 1)
-            temp1++;
         } // while (temp1 != pool.end())
 
-        temp2++;
+        temp2 = elite.begin();
         countj = counti;
         if ((archieve_size + front_size) <= inds.size() / 2){
             
             while (temp2 != elite.end()){
                 newPop.push_back(inds[*temp2]);
-                newPop[*temp2]->rank = rank;
+                newPop[archieve_size]->rank = rank;
                 archieve_size++;
                 temp2++;
                 counti++;
@@ -599,12 +615,13 @@ Population::Population(params p){
 } // Population::Population
 
 void Population::Evolution(std::vector<Individual*> &childInd){
+    this->_computeViolation();
     Population::_assign_rank_and_crowding_distance(this->ind, 0, this->ind.size());
-    cout << "p" << endl;
     ReportPop(InitialPopPath);
-
+    
     this->_selection(childInd);
     this->_mutation(childInd);
+    
     int nbin = this->ind[0]->gene.size();
     if (nbin != 0){
         for (auto c : childInd){
@@ -626,11 +643,11 @@ void Population::Evolution(std::vector<Individual*> &childInd){
 
 void Population::ReportPop(std::string path){
     ofstream file;
-    file.open(LogPath, ios::app);
+    file.open(path, ios::app);
     if (file.is_open()){
-        string sss = "# Gen " + this->currentGen;
+        string sss = "# Gen " + to_string(this->currentGen);
         file << sss << "\n";
-        for (int i; i < this->ind.size(); i++){
+        for (int i = 0; i < this->ind.size(); i++){
             // 写入目标值
             int nobj = this->ind[i]->obj.size();
             file << '"';
@@ -681,9 +698,9 @@ void Population::ReportPop(std::string path){
 
 void Population::RecordBest(std::string path){
     ofstream file;
-    file.open(LogPath, ios::app);
+    file.open(path, ios::app);
     if (file.is_open()){
-        for (int i; i < this->ind.size(); i++){
+        for (int i = 0; i < this->ind.size(); i++){
             if (this->ind[i]->constr_violation == 0.0 && this->ind[i]->rank==1){
                 // 写入目标值
                 int nobj = this->ind[i]->obj.size();
@@ -739,6 +756,7 @@ void Population::RefreshPop(std::vector<Individual*> &childInd){
     for (auto i : this->ind){
         mix.push_back(i);
     }
+    
     this->_fill_nondominated_sort(mix);
     this->currentGen++;
 } // void Population::RefreshPop(std::vector<Individual*> &childInd)
