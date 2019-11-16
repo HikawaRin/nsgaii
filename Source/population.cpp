@@ -52,7 +52,8 @@ Individual::Individual(params p){
     std::uniform_real_distribution<double> dis(0, 1);
     if (p.nreal != 0){
         for (int i = 0; i < p.nreal; i++){
-            double num = dis(gen) * (p.max_realvar[i] - p.min_realvar[i]) + p.min_realvar[i];
+            double num = dis(gen);
+            num = (num * (p.max_realvar[i] - p.min_realvar[i])) + p.min_realvar[i];
             Individual::xreal.push_back(num);
         }
 
@@ -94,7 +95,9 @@ void Population::_computeViolation(){
     int ncon = Population::ind[0]->constr.size();
 
     if (ncon == 0){
-        return;
+        for (auto i : this->ind){
+            i->constr_violation = 0.0;
+        }
     }else{
         int popsize = Population::ind.size();
         for (int i = 0; i < popsize; i++){
@@ -119,9 +122,9 @@ int Check_dominance(Individual *a, Individual *b){
         if (a->constr_violation > b->constr_violation){
             return 1;
         }else if(a->constr_violation < b->constr_violation){
-            return 0;
-        }else{
             return -1;
+        }else{
+            return 0;
         } // if (a.constr_violation > b.constr_violation)
     }else{
         if (a->constr_violation < 0 && b->constr_violation == 0){
@@ -150,14 +153,14 @@ int Check_dominance(Individual *a, Individual *b){
     } // if (a.constr_violation < 0 && b.constr_violation < 0)
 } // int Check_dominance(Individual a, Individual b)
 
-void Population::_assign_rank_and_crowding_distance(std::vector<Individual*> &inds, int left, int right){
+void Population::_assign_rank_and_crowding_distance(std::vector<Individual*> &inds){
     // 现在进行排序的个体的级别
     int rank = 1;
     // 准备被排序的序号
     std::list<int> cur;
     // 暂未被排序的个体的序号
     std::list<int> origin;
-    for (int i = left; i < right; i++){
+    for (int i = 0; i < inds.size(); i++){
         origin.push_back(i);
     }
     // 用于定位序号的迭代器
@@ -258,7 +261,7 @@ void Population::_assign_rank_and_crowding_distance(std::vector<Individual*> &in
 
                         it++;
                     }else{
-                        it = dist.end();
+                        it++;
                     } // if (Population::ind[*it].crowd_dist != INF)
                 } // while (it != dist.end())
             } // for (int i = 0; i < nobj; i++)
@@ -328,44 +331,59 @@ void Population::_crossover(Individual *p1, Individual *p2, Individual *c1, Indi
                 if (rand <= 0.5){
                     if (fabs(p1->xreal[i] - p2->xreal[i]) > EPS){
                         double y1 = 0, y2 = 0, yl = 0, yu = 0;
-                        if (p1->xreal[i] < p2->xreal[i]){
+                        if (p1->xreal[i] < p2->xreal[i])
+                        {
                             y1 = p1->xreal[i];
                             y2 = p2->xreal[i];
-                        }else{
+                        }
+                        else
+                        {
                             y1 = p2->xreal[i];
-                            y1 = p1->xreal[i];
+                            y2 = p1->xreal[i];
                         }
                         yl = this->min_realvar->at(i);
                         yu = this->max_realvar->at(i);
                         rand = dis(gen);
-                        beta = 1.0 + (2.0 * (y1 - yl) / (y2 - y1));
-                        alpha = 2.0 - pow(beta, -(this->eta_c + 1.0));
-                        if (rand <= (1.0 / alpha)){
-                            betaq = pow((rand*alpha), (1.0/(this->eta_c + 1.0)));
-                        }else{
-                            betaq = pow((1.0 /(2.0 - rand * alpha)), (1.0 / (this->eta_c + 1.0)));
-                        } // if (rand <= (1.0 / alpha))
-                        cc1 = 0.5 * ((y1 + y2) - betaq * (y2 - y1));
-                        beta = 1.0 + (2.0 * (yu - y2) / (y2 - y1));
-                        alpha = 2.0 - pow(beta, -(this->eta_c + 1.0));
-                        if (rand <= (1.0 / alpha)){
-                            betaq = pow ((rand * alpha), (1.0 / (this->eta_c + 1.0)));
-                        }else{
-                            betaq = pow((1.0 / (2.0 - rand * alpha)), (1.0 / (this->eta_c + 1.0)));
-                        } // if (rand <= (1.0 / alpha))
-                        cc2 = 0.5 * ((y1 + y2) + betaq * (y2 -y1));
-                        cc1 = (cc1 < yl)?yl:cc1;
-                        cc1 = (cc1 > yu)?yu:cc1;
-                        cc2 = (cc2 < yl)?yl:cc2;
-                        cc2 = (cc2 > yu)?yu:cc2;
-                        
-                        if (dis(gen) <= 0.5){
+                        beta = 1.0 + (2.0*(y1-yl)/(y2-y1));
+                        alpha = 2.0 - pow(beta,-(eta_c+1.0));
+                        if (rand <= (1.0/alpha))
+                        {
+                            betaq = pow ((rand*alpha),(1.0/(eta_c+1.0)));
+                        }
+                        else
+                        {
+                            betaq = pow ((1.0/(2.0 - rand*alpha)),(1.0/(eta_c+1.0)));
+                        }
+                        cc1 = 0.5*((y1+y2)-betaq*(y2-y1));
+                        beta = 1.0 + (2.0*(yu-y2)/(y2-y1));
+                        alpha = 2.0 - pow(beta,-(eta_c+1.0));
+                        if (rand <= (1.0/alpha))
+                        {
+                            betaq = pow ((rand*alpha),(1.0/(eta_c+1.0)));
+                        }
+                        else
+                        {
+                            betaq = pow ((1.0/(2.0 - rand*alpha)),(1.0/(eta_c+1.0)));
+                        }
+                        cc2 = 0.5*((y1+y2)+betaq*(y2-y1));
+                        if (cc1<yl)
+                            cc1=yl;
+                        if (cc2<yl)
+                            cc2=yl;
+                        if (cc1>yu)
+                            cc1=yu;
+                        if (cc2>yu)
+                            cc2=yu;
+                        if (dis(gen)<=0.5)
+                        {
                             c1->xreal[i] = cc2;
                             c2->xreal[i] = cc1;
-                        }else{
+                        }
+                        else
+                        {
                             c1->xreal[i] = cc1;
                             c2->xreal[i] = cc2;
-                        } // if (dis(gen) <= 0.5)
+                        }
                     } // if (fabs(p1->xreal[i] - p2->xreal[i]) > EPS)
                 }else{
                     c1->xreal[i] = p1->xreal[i];
@@ -502,7 +520,7 @@ void Population::_mutation(std::vector<Individual*> &pop){
 } // void Mutation(std::vector<Individual*> &pop)
 
 void Population::_fill_nondominated_sort(std::vector<Individual*> &inds){
-    int archieve_size = 0, front_size = 0, flag = 0, end = 0, rank = 1;
+    int archieve_size = 0, front_size = 0, flag = 0, rank = 1;
     int counti = 0, countj = 0;
     std::vector<Individual*> newPop;
     list<int> pool, elite;
@@ -520,8 +538,7 @@ void Population::_fill_nondominated_sort(std::vector<Individual*> &inds){
         
         while (temp1 != pool.end()){
             temp2 = elite.begin();
-            while (end != 1 && temp2 != elite.end()){
-                end = 0;
+            while (temp2 != elite.end()){
                 flag = Check_dominance(inds[*temp1], inds[*temp2]);
                 if (flag == 1){
                     pool.push_front(*temp2);
@@ -530,7 +547,7 @@ void Population::_fill_nondominated_sort(std::vector<Individual*> &inds){
                 }else if (flag == 0){
                     temp2++;
                 }else{
-                    end = 1;
+                    break;
                 }
             } // while (end != 1 && temp2 != elite.end())
             if (flag == 0 || flag == 1){
@@ -541,7 +558,7 @@ void Population::_fill_nondominated_sort(std::vector<Individual*> &inds){
                 temp1++;
             } // if (flag == 0 || flag == 1)
         } // while (temp1 != pool.end())
-
+        
         temp2 = elite.begin();
         countj = counti;
         if ((archieve_size + front_size) <= inds.size() / 2){
@@ -553,29 +570,114 @@ void Population::_fill_nondominated_sort(std::vector<Individual*> &inds){
                 temp2++;
                 counti++;
             } // while (temp2 != elite.end())
-            this->_assign_rank_and_crowding_distance(newPop, countj, counti-1);
+            // 原算法中assign_crowding_distance_indices
+            int c1 = countj, c2 = counti-1;
+            int fs = c2-c1+1;
+            if (fs < 3){
+                newPop[c1]->crowd_dist = INF;
+                if (fs == 2){
+                    newPop[c2]->crowd_dist = INF;
+                }
+            }else{
+                std::vector<int> dist;
+                for (int i = 0; i < fs; i++){
+                    dist.push_back(c1 + i);
+                }
+                
+                // assign_crowding_distance
+                int nobj = newPop[0]->obj.size();
+                for (int i = 0; i < nobj; i++){
+                    std::sort(dist.begin(), dist.end(), [newPop, i](int a, int b)->bool{return newPop[a]->obj[i]<newPop[b]->obj[i];});
+                    auto dit = dist.begin();
+                    newPop[*dit++]->crowd_dist = INF;
+                    auto last = dist.end();
+                    last--;
+                    double head = newPop[*dist.begin()]->obj[i], tail = newPop[*last]->obj[i];
+                    while (dit != dist.end()){
+                        if (dit == last){
+                            break;
+                        }
+                        if (newPop[*dit]->crowd_dist != INF){
+                            if (head == tail){
+                                newPop[*dit]->crowd_dist += 0.0;
+                            }else{
+                                auto f = dit, b = dit;
+                                f--; b++;
+                                newPop[*dit]->crowd_dist += (newPop[*b]->crowd_dist - newPop[*f]->crowd_dist) / (tail - head);
+                            } // if (head == tail)
+                        } // if (newPop[*dit]->crowd_dist != INF)
+                        dit++;
+                    } // while (dit != dist.end())
+                } // for (int i = 0; i < nobj; i++)
+                for (auto i : dist){
+                    if (newPop[i]->crowd_dist != INF){
+                        newPop[i]->crowd_dist /= nobj;
+                    }
+                }
+                
+            } // if (fs < 3)
             rank++;
         }else{
+            temp2 = elite.begin();
             // crowding_fill
-            std::vector<int> dist;
-            auto lt = elite.begin();
-            this->_assign_rank_and_crowding_distance(inds, *temp2, front_size);
-            for (int j = 0; j < front_size; j++){
-                dist.push_back(*lt);
-                lt++;
+            if (front_size < 3){
+                inds[*temp2]->crowd_dist = INF;
+                if (front_size == 2){
+                    inds[*++temp2]->crowd_dist = INF;
+                }
+            }else{
+                std::vector<int> dist;
+                while (temp2 != elite.end()){
+                    dist.push_back(*temp2++);
+                } // while (temp2 != elite.end())
+
+                int nobj = inds[0]->obj.size();
+                for (int i = 0; i < nobj; i++){
+                    std::sort(dist.begin(), dist.end(), [inds, i](int a, int b)->bool{return inds[a]->obj[i]<inds[b]->obj[i];});
+
+                    auto dit = dist.begin();
+                    inds[*dit++]->crowd_dist = INF;
+                    auto last = dist.end();
+                    last--;
+                    double head = inds[*dist.begin()]->obj[i], tail = inds[*last]->obj[i];
+                    while (dit != dist.end()){
+                        if (dit == last){
+                            break;
+                        }
+                        if (inds[*dit]->crowd_dist != INF){
+                            if (head == tail){
+                                inds[*dit]->crowd_dist += 0.0;
+                            }else{
+                                auto f = dit, b = dit;
+                                f--; b++;
+                                inds[*dit]->crowd_dist += (inds[*b] - inds[*f]) / (tail - head);
+                            } // if (head == tail)
+                        } // if (newPop[*dit]->crowd_dist != INF)
+                        dit++;
+                    } // while (dit != dist.end())
+                } // for (int i = 0; i < nobj; i++)
+                for (auto i : dist){
+                    if (inds[i]->crowd_dist != INF){
+                        inds[i]->crowd_dist /= nobj;
+                    }
+                }
+            } // if (front_size < 3)
+
+            temp2 = elite.begin();
+            std::vector<int> ltemp;
+            for (auto e : elite){
+                ltemp.push_back(e);
             }
-            std::sort(dist.begin(), dist.end(), [inds](int a, int b)->bool{return inds[a]->crowd_dist < inds[b]->crowd_dist;});
-            int j = front_size - 1;
+            std::sort(ltemp.begin(), ltemp.end(), [inds](int a, int b)->bool{return inds[a]->crowd_dist>inds[b]->crowd_dist;});
+            auto ltit = ltemp.begin();
             for (int i = counti; i < inds.size() / 2; i++){
-                newPop.push_back(inds[dist[j]]);
-                j--;
+                newPop.push_back(inds[*ltit++]);
             }
-            archieve_size = inds.size();
+            archieve_size = inds.size() / 2;
             for (countj = counti; countj < inds.size() / 2; countj++){
-                newPop[j]->rank = rank;
+                newPop[countj]->rank = rank;
             }
         } // if ((archieve_size + front_size) <= inds.size() / 2)
-
         elite.clear();
     } // while (archieve_size < (inds.size() / 2))
 
@@ -616,8 +718,11 @@ Population::Population(params p){
 
 void Population::Evolution(std::vector<Individual*> &childInd){
     this->_computeViolation();
-    Population::_assign_rank_and_crowding_distance(this->ind, 0, this->ind.size());
-    ReportPop(InitialPopPath);
+    Population::_assign_rank_and_crowding_distance(this->ind);
+    if (this->currentGen == 1){
+        ReportPop(InitialPopPath);
+        ReportPop(AllPopPath);
+    }
     
     this->_selection(childInd);
     this->_mutation(childInd);
@@ -652,7 +757,7 @@ void Population::ReportPop(std::string path){
             int nobj = this->ind[i]->obj.size();
             file << '"';
             for (int j = 0; j < nobj; j++){
-                file << this->ind[i]->obj[j] << ((j == nobj - 1)?'"':',');
+                file << to_string(this->ind[i]->obj[j]) << ((j == nobj - 1)?'"':',');
             } // for (int j = 0; j < nobj; j++)
             file << ',';
 
@@ -660,18 +765,22 @@ void Population::ReportPop(std::string path){
             if (ncon != 0){
                 file << '"';
                 for (int j = 0; j < ncon; j++){
-                    file << this->ind[i]->constr[j] << ((j == ncon - 1)?'"':',');
+                    file << to_string(this->ind[i]->constr[j]) << ((j == ncon - 1)?'"':',');
                 } // for (int j = 0; j < ncon; j++)
                 file << ',';
+            }else{
+                file << '"' << '"' << ',';
             } // if (ncon != 0)
 
             int nreal = this->ind[i]->xreal.size();
             if (nreal != 0){
                 file << '"';
                 for (int j = 0; j < nreal; j++){
-                    file << this->ind[i]->xreal[j] << ((j == nreal - 1)?'"':',');
+                    file << to_string(this->ind[i]->xreal[j]) << ((j == nreal - 1)?'"':',');
                 } // for (int j = 0; j < nreal; j++)
                 file << ',';
+            }else{
+                file << '"' << '"' << ',';
             } // if (nreal != 0)
 
             int nbin = this->ind[i]->gene.size();
@@ -680,10 +789,12 @@ void Population::ReportPop(std::string path){
                 for (int j = 0; j < nbin; j++){
                     file << '"';
                     for (int k = 0; k < this->ind[i]->gene[j].size(); k++){
-                        file << this->ind[i]->gene[j][k] << ((k == this->ind[i]->gene[j].size() - 1)?'"':',');
+                        file << to_string(this->ind[i]->gene[j][k]) << ((k == this->ind[i]->gene[j].size() - 1)?'"':',');
                     } // for (int k = 0; k < this->ind[i]->gene[j].size(); k++)
                     file << ',';
                 }
+            }else{
+                file << '"' << '"' << ',';
             } // if (nbin != 0)
             file << this->ind[i]->constr_violation << ',';
             file << this->ind[i]->rank << ',';
@@ -706,7 +817,7 @@ void Population::RecordBest(std::string path){
                 int nobj = this->ind[i]->obj.size();
                 file << '"';
                 for (int j = 0; j < nobj; j++){
-                    file << this->ind[i]->obj[j] << ((j == nobj - 1)?'"':',');
+                    file << to_string(this->ind[i]->obj[j]) << ((j == nobj - 1)?'"':',');
                 } // for (int j = 0; j < nobj; j++)
                 file << ',';
 
@@ -714,7 +825,7 @@ void Population::RecordBest(std::string path){
                 if (ncon != 0){
                     file << '"';
                     for (int j = 0; j < ncon; j++){
-                        file << this->ind[i]->constr[j] << ((j == ncon - 1)?'"':',');
+                        file << to_string(this->ind[i]->constr[j]) << ((j == ncon - 1)?'"':',');
                     } // for (int j = 0; j < ncon; j++)
                     file << ',';
                 } // if (ncon != 0)
@@ -723,7 +834,7 @@ void Population::RecordBest(std::string path){
                 if (nreal != 0){
                     file << '"';
                     for (int j = 0; j < nreal; j++){
-                        file << this->ind[i]->xreal[j] << ((j == nreal - 1)?'"':',');
+                        file << to_string(this->ind[i]->xreal[j]) << ((j == nreal - 1)?'"':',');
                     } // for (int j = 0; j < nreal; j++)
                     file << ',';
                 } // if (nreal != 0)
@@ -734,7 +845,7 @@ void Population::RecordBest(std::string path){
                     for (int j = 0; j < nbin; j++){
                         file << '"';
                         for (int k = 0; k < this->ind[i]->gene[j].size(); k++){
-                            file << this->ind[i]->gene[j][k] << ((k == this->ind[i]->gene[j].size() - 1)?'"':',');
+                            file << to_string(this->ind[i]->gene[j][k]) << ((k == this->ind[i]->gene[j].size() - 1)?'"':',');
                         } // for (int k = 0; k < this->ind[i]->gene[j].size(); k++)
                         file << ',';
                     }

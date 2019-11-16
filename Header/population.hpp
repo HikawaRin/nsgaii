@@ -73,7 +73,7 @@ private:
     // 计算种群中个体违反约束的情况
     void _computeViolation();
     // 计算支配等级及拥挤度
-    void _assign_rank_and_crowding_distance(std::vector<Individual*> &inds, int left, int right);
+    void _assign_rank_and_crowding_distance(std::vector<Individual*> &inds);
     // 种群选择操作
     void _selection(std::vector<Individual*> &childInd);
     // 种群交叉

@@ -30,8 +30,14 @@ void NSGAII::ComputeObj(std::vector<Individual*> &inds){
     NSGAII:_dataBase->GetData(dataForms);
     // 将目标值写入种群
     for (int i = 0; i < dataForms.size(); i++){
-        inds[i]->obj = dataForms[i].obj;
-        inds[i]->constr = dataForms[i].constr;
+        inds[i]->obj.clear();
+        inds[i]->constr.clear();
+        for (int j = 0; j < dataForms[i].obj.size(); j++){
+            inds[i]->obj.push_back(dataForms[i].obj[j]);
+        }
+        for (int j = 0; j < dataForms[i].constr.size(); j++){
+            inds[i]->constr.push_back(dataForms[i].constr[j]);
+        }
     }
 } // void NSGAII::ComputeObj()
 
@@ -61,10 +67,11 @@ void NSGAII::Evolution(){
             }
             this->ComputeObj(inds);
             inds.clear();
-            
+
             this->_populations[0]->RefreshPop(childInd);
             this->_populations[0]->ReportPop(AllPopPath);
         }
+        this->_populations[0]->ReportPop(FinalPopPath);
         this->_populations[0]->RecordBest(BestPopPath);
     }else{
         // 创建CoreNum个线程，每个线程分配一个种群进行隔离进化
