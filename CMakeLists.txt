@@ -3,10 +3,17 @@ project(nsga2)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(Header)
-include_directories(Source)
-include_directories(Input)
-include_directories(Include)
+include_directories ("${PROJECT_SOURCE_DIR}")
+include_directories ("${PROJECT_SOURCE_DIR}/Header")
+include_directories ("${PROJECT_SOURCE_DIR}/Source")
 
-AUX_SOURCE_DIRECTORY(./ DIR_SRCS)
-add_executable(nsga2 ${DIR_SRCS})
+if(MSVC)
+    file(GLOB_RECURSE Header *.h *.hpp)
+    file(GLOB_RECURSE Source *.c *.cpp)
+
+    source_group("Header" FILES ${Header})
+    source_group("Source" FILES ${Source})
+    add_executable(nsga2 ${PROJECT_SOURCE_DIR} ${Header} ${Source})
+elseif(UNIX)
+    add_executable(nsga2 main.cpp)
+endif()

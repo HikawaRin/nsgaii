@@ -61,13 +61,27 @@ void NSGAII::Evolution(){
         for (int i = 0; i < this->Params.ngen; i++){
             cout << "Gen: " << i << endl;
             NSGAII::_populations[0]->Evolution(childInd);
-            
             for (auto i : childInd){
                 inds.push_back(i);
             }
             this->ComputeObj(inds);
+            if (this->Params.ncon == 0){
+                for (auto i : inds){
+                    i->constr_violation = 0.0;
+                }
+            }else{
+                int popsize = this->Params.popsize;
+                for (int i = 0; i < popsize; i++){
+                    int violation = 0;
+                    for (int j = 0; j < this->Params.ncon; j++){
+                        if (inds[i]->constr[j] < 0.0){
+                            violation += inds[i]->constr[j];
+                        }
+                    } // for (int j = 0; j < ncon; j++)
+                    inds[i]->constr_violation = violation;
+                } // for (int i = 0; i < popsize; i++)
+            } // if (ncon == 0)
             inds.clear();
-
             this->_populations[0]->RefreshPop(childInd);
             this->_populations[0]->ReportPop(AllPopPath);
         }
